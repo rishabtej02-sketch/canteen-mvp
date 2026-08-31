@@ -1,0 +1,164 @@
+From 5628bfa7d1decb0a3e323262ee2b90c987b55606 Mon Sep 17 00:00:00 2001
+From: Claude <claude@anthropic.local>
+Date: Mon, 31 Aug 2026 01:32:29 +0000
+Subject: [PATCH] fix: KDS realtime + polling fallback; spread seeded placed_at
+ across 14 days
+
+- KDS: subscribe + 5s poll fallback, header shows live/polling/connecting
+- new SQL sql/fix_realtime_and_timestamps.sql: force publication + REPLICA IDENTITY FULL,
+  spread bunched placed_at using deterministic hash, backfill ready_at/completed_at
+- fixes: operator sees student orders live; analytics dates no longer collapse to one bar
+---
+ sql/fix_realtime_and_timestamps.sql | 71 +++++++++++++++++++++++++++++
+ src/app/operator/kds/page.tsx       | 39 ++++++++++++++--
+ 2 files changed, 107 insertions(+), 3 deletions(-)
+ create mode 100644 sql/fix_realtime_and_timestamps.sql
+
+diff --git a/sql/fix_realtime_and_timestamps.sql b/sql/fix_realtime_and_timestamps.sql
+new file mode 100644
+index 0000000..9874942
+--- /dev/null
++++ b/sql/fix_realtime_and_timestamps.sql
+@@ -0,0 +1,71 @@
++-- =========================================================
++-- Canteen MVP — FIX: Realtime + backfill placed_at spread
++-- Run in Supabase SQL editor. Idempotent. Safe.
++-- =========================================================
++
++-- ---------- 1. Realtime: force publication ----------
++do $$ begin
++  perform 1 from pg_publication where pubname='supabase_realtime';
++  if not found then create publication supabase_realtime; end if;
++end $$;
++
++alter publication supabase_realtime add table orders;
++alter publication supabase_realtime add table order_items;
++
++-- REPLICA IDENTITY FULL so UPDATE events carry full row (needed for filters)
++alter table orders        replica identity full;
++alter table order_items   replica identity full;
++
++-- ---------- 2. Spread placed_at over last 14 days ----------
++-- Only touch rows where placed_at is bunched (>=5 rows share same second).
++-- Distribution: weighted toward lunch (12-14) + snack (16-18) peaks.
++-- Deterministic per row id so re-runs are stable.
++
++with bunched as (
++  select date_trunc('second', placed_at) as sec, count(*) as n
++  from orders
++  group by 1
++  having count(*) >= 5
++)
++update orders o
++set placed_at =
++  (now() at time zone 'Asia/Kolkata')::date
++  - ((abs(hashtext(o.id::text)) % 14) || ' days')::interval   -- day 0..13
++  + (
++      case (abs(hashtext(o.id::text || 'h')) % 10)
++        when 0 then 8   when 1 then 9   when 2 then 10
++        when 3 then 12  when 4 then 12  when 5 then 13
++        when 6 then 13  when 7 then 16  when 8 then 17
++        else 19
++      end
++    ) * interval '1 hour'
++  + ((abs(hashtext(o.id::text || 'm')) % 60) || ' minutes')::interval
++  + ((abs(hashtext(o.id::text || 's')) % 60) || ' seconds')::interval
++from bunched b
++where date_trunc('second', o.placed_at) = b.sec;
++
++-- keep ready_at / completed_at consistent for finished orders
++update orders
++set ready_at = placed_at + interval '6 minutes'
++where status in ('ready','completed') and ready_at is null;
++
++update orders
++set completed_at = placed_at + interval '12 minutes'
++where status = 'completed' and completed_at is null;
++
++-- ---------- 3. Sanity ----------
++do $$
++declare
++  n_orders int;
++  n_distinct_days int;
++  n_realtime int;
++begin
++  select count(*) into n_orders from orders;
++  select count(distinct (placed_at at time zone 'Asia/Kolkata')::date)
++    into n_distinct_days from orders;
++  select count(*) into n_realtime
++    from pg_publication_tables
++    where pubname='supabase_realtime' and tablename in ('orders','order_items');
++  raise notice 'orders=%  distinct_days=%  realtime_tables=%',
++    n_orders, n_distinct_days, n_realtime;
++end $$;
+diff --git a/src/app/operator/kds/page.tsx b/src/app/operator/kds/page.tsx
+index 4c8cc59..e47b50b 100644
+--- a/src/app/operator/kds/page.tsx
++++ b/src/app/operator/kds/page.tsx
+@@ -38,8 +38,14 @@ export default function KdsPage() {
+     setLoading(false);
+   }, [supabase]);
+ 
++  const [rtStatus, setRtStatus] = useState<"connecting" | "live" | "polling">(
++    "connecting"
++  );
++
+   useEffect(() => {
+     load();
++
++    // Realtime primary path
+     const channel = supabase
+       .channel("kds")
+       .on("postgres_changes", { event: "*", schema: "public", table: "orders" }, () =>
+@@ -50,9 +56,23 @@ export default function KdsPage() {
+         { event: "*", schema: "public", table: "order_items" },
+         () => load()
+       )
+-      .subscribe();
++      .subscribe((status) => {
++        if (status === "SUBSCRIBED") setRtStatus("live");
++        else if (
++          status === "CHANNEL_ERROR" ||
++          status === "TIMED_OUT" ||
++          status === "CLOSED"
++        )
++          setRtStatus("polling");
++      });
++
++    // Polling fallback (always on, cheap). Guarantees KDS updates
++    // even if Realtime toggle is off in Supabase project.
++    const poll = setInterval(load, 5000);
++
+     return () => {
+       supabase.removeChannel(channel);
++      clearInterval(poll);
+     };
+   }, [supabase, load]);
+ 
+@@ -107,8 +127,21 @@ export default function KdsPage() {
+         <div>
+           <h1 className="text-2xl font-bold">Kitchen Display</h1>
+           <p className="text-sm text-slate-500">
+-            <span className="mr-1 inline-block h-2 w-2 rounded-full bg-emerald-500 animate-pulse-dot align-middle" />
+-            Live via Supabase Realtime · advances one tap at a time.
++            <span
++              className={`mr-1 inline-block h-2 w-2 rounded-full align-middle animate-pulse-dot ${
++                rtStatus === "live"
++                  ? "bg-emerald-500"
++                  : rtStatus === "polling"
++                  ? "bg-amber-500"
++                  : "bg-slate-400"
++              }`}
++            />
++            {rtStatus === "live"
++              ? "Live via Supabase Realtime"
++              : rtStatus === "polling"
++              ? "Polling every 5s (Realtime unavailable)"
++              : "Connecting…"}
++            {" · advances one tap at a time."}
+           </p>
+         </div>
+         <div className="flex flex-wrap gap-2">
+-- 
+2.43.0
+

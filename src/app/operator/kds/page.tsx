@@ -38,8 +38,14 @@ export default function KdsPage() {
     setLoading(false);
   }, [supabase]);
 
+  const [rtStatus, setRtStatus] = useState<"connecting" | "live" | "polling">(
+    "connecting"
+  );
+
   useEffect(() => {
     load();
+
+    // Realtime primary path
     const channel = supabase
       .channel("kds")
       .on("postgres_changes", { event: "*", schema: "public", table: "orders" }, () =>
@@ -50,9 +56,23 @@ export default function KdsPage() {
         { event: "*", schema: "public", table: "order_items" },
         () => load()
       )
-      .subscribe();
+      .subscribe((status) => {
+        if (status === "SUBSCRIBED") setRtStatus("live");
+        else if (
+          status === "CHANNEL_ERROR" ||
+          status === "TIMED_OUT" ||
+          status === "CLOSED"
+        )
+          setRtStatus("polling");
+      });
+
+    // Polling fallback (always on, cheap). Guarantees KDS updates
+    // even if Realtime toggle is off in Supabase project.
+    const poll = setInterval(load, 5000);
+
     return () => {
       supabase.removeChannel(channel);
+      clearInterval(poll);
     };
   }, [supabase, load]);
 
@@ -107,8 +127,21 @@ export default function KdsPage() {
         <div>
           <h1 className="text-2xl font-bold">Kitchen Display</h1>
           <p className="text-sm text-slate-500">
-            <span className="mr-1 inline-block h-2 w-2 rounded-full bg-emerald-500 animate-pulse-dot align-middle" />
-            Live via Supabase Realtime · advances one tap at a time.
+            <span
+              className={`mr-1 inline-block h-2 w-2 rounded-full align-middle animate-pulse-dot ${
+                rtStatus === "live"
+                  ? "bg-emerald-500"
+                  : rtStatus === "polling"
+                  ? "bg-amber-500"
+                  : "bg-slate-400"
+              }`}
+            />
+            {rtStatus === "live"
+              ? "Live via Supabase Realtime"
+              : rtStatus === "polling"
+              ? "Polling every 5s (Realtime unavailable)"
+              : "Connecting…"}
+            {" · advances one tap at a time."}
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
