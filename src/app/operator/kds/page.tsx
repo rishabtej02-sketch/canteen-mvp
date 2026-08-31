@@ -25,16 +25,32 @@ export default function KdsPage() {
   const [loading, setLoading] = useState(true);
 
   const load = useCallback(async () => {
-    const { data, error } = await supabase
+    // Active orders: no time filter, no limit — always show every open ticket.
+    const activeQ = supabase
       .from("orders")
       .select(
         "*, profiles(full_name, email), order_items(*, menu_items(name))"
       )
-      .in("status", ["pending", "preparing", "ready", "completed"])
-      .order("placed_at", { ascending: true })
-      .limit(120);
-    if (error) setErr(error.message);
-    setOrders((data ?? []) as unknown as OrderWithItems[]);
+      .in("status", ["pending", "preparing", "ready"])
+      .order("placed_at", { ascending: false });
+
+    // Completed: only last 24h, capped, for the "Completed" tab.
+    const since = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+    const doneQ = supabase
+      .from("orders")
+      .select(
+        "*, profiles(full_name, email), order_items(*, menu_items(name))"
+      )
+      .eq("status", "completed")
+      .gte("placed_at", since)
+      .order("placed_at", { ascending: false })
+      .limit(50);
+
+    const [{ data: aData, error: aErr }, { data: dData, error: dErr }] =
+      await Promise.all([activeQ, doneQ]);
+    if (aErr || dErr) setErr((aErr ?? dErr)!.message);
+    const merged = [...(aData ?? []), ...(dData ?? [])] as unknown as OrderWithItems[];
+    setOrders(merged);
     setLoading(false);
   }, [supabase]);
 
