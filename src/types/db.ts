@@ -52,6 +52,8 @@ export interface CartLine {
 }
 
 export interface OrderWithItems extends OrderRow {
-  order_items: (OrderItemRow & { menu_items?: Pick<MenuItem, "name"> })[];
+  order_items: (OrderItemRow & {
+    menu_items?: Partial<Pick<MenuItem, "name" | "prep_seconds" | "category">> | null;
+  })[];
   profiles?: Pick<Profile, "full_name" | "email"> | null;
 }

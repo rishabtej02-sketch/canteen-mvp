@@ -4,29 +4,70 @@
 
 :root {
   color-scheme: light;
+  --bg: #f7f8ff;
 }
 
-html,
+html, body { height: 100%; }
 body {
-  height: 100%;
+  @apply text-slate-900 antialiased;
+  background:
+    radial-gradient(1000px 500px at -10% -10%, rgba(99,102,241,0.10), transparent 60%),
+    radial-gradient(900px 500px at 110% 0%, rgba(236,72,153,0.08), transparent 60%),
+    #f7f8ff;
+  min-height: 100vh;
 }
 
-body {
-  @apply bg-slate-50 text-slate-900 antialiased;
+/* Buttons */
+@layer components {
+  .btn {
+    @apply inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2 text-sm font-semibold
+           transition-all duration-150 select-none;
+  }
+  .btn-primary {
+    @apply btn text-white bg-gradient-brand shadow-pop
+           hover:brightness-110 active:brightness-95 disabled:opacity-50 disabled:pointer-events-none;
+  }
+  .btn-ghost {
+    @apply btn bg-white/70 text-slate-700 ring-1 ring-slate-200
+           hover:bg-white hover:shadow-soft;
+  }
+  .btn-outline {
+    @apply btn bg-white text-brand-700 ring-1 ring-brand-200 hover:bg-brand-50;
+  }
+  .btn-danger {
+    @apply btn bg-rose-50 text-rose-700 ring-1 ring-rose-200 hover:bg-rose-100;
+  }
+  .card {
+    @apply rounded-2xl bg-white shadow-soft ring-1 ring-slate-200/70;
+  }
+  .card-hover {
+    @apply card transition-all duration-200 hover:-translate-y-0.5 hover:shadow-pop;
+  }
+  .badge {
+    @apply inline-flex items-center rounded-full px-2 py-0.5 text-xs font-semibold;
+  }
+  .input {
+    @apply w-full rounded-xl border-0 bg-white px-3 py-2 text-sm shadow-sm ring-1 ring-slate-200
+           focus:outline-none focus:ring-2 focus:ring-brand-400;
+  }
+  .stat {
+    @apply card p-4 flex flex-col gap-1;
+  }
+  .stat-label { @apply text-xs uppercase tracking-wide text-slate-500 font-semibold; }
+  .stat-value { @apply text-2xl font-bold text-slate-900; }
+  .stat-sub   { @apply text-xs text-slate-500; }
+  .divider    { @apply h-px w-full bg-slate-200; }
+  .link       { @apply text-brand-600 hover:text-brand-700 underline underline-offset-2; }
 }
 
-.btn {
-  @apply inline-flex items-center justify-center rounded-lg px-3 py-2 text-sm font-medium transition;
-}
-.btn-primary {
-  @apply btn bg-brand-500 text-white hover:bg-brand-600 disabled:opacity-50;
-}
-.btn-ghost {
-  @apply btn text-slate-700 hover:bg-slate-100;
-}
-.card {
-  @apply rounded-xl bg-white shadow-sm ring-1 ring-slate-200;
-}
-.badge {
-  @apply inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium;
+/* Utility: scrollbar hide */
+.no-scrollbar::-webkit-scrollbar { display: none; }
+.no-scrollbar { scrollbar-width: none; }
+
+/* subtle grid backdrop for hero */
+.hero-grid {
+  background-image:
+    linear-gradient(to right, rgba(99,102,241,0.06) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(99,102,241,0.06) 1px, transparent 1px);
+  background-size: 32px 32px;
 }
