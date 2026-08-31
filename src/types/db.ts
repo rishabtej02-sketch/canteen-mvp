@@ -7,8 +7,12 @@ export type OrderStatus =
   | "cancelled";
 export type UserRole = "student" | "operator" | "admin";
 
+// IDs may be bigint OR uuid depending on how the DB was originally seeded —
+// keep them as `number | string` so both survive.
+export type RowId = number | string;
+
 export interface MenuItem {
-  id: number;
+  id: RowId;
   external_id: string | null;
   name: string;
   category: ItemCategory;
@@ -28,7 +32,7 @@ export interface Profile {
 }
 
 export interface OrderRow {
-  id: number;
+  id: RowId;
   student_id: string | null;
   status: OrderStatus;
   total_amount: number;
@@ -39,9 +43,9 @@ export interface OrderRow {
 }
 
 export interface OrderItemRow {
-  id: number;
-  order_id: number;
-  item_id: number;
+  id: RowId;
+  order_id: RowId;
+  item_id: RowId;
   quantity: number;
   unit_price: number;
 }

@@ -16,7 +16,7 @@ export function MenuGrid({
 }: {
   items: MenuItem[];
   onAdd: (item: MenuItem) => void;
-  qtyInCart: (id: number) => number;
+  qtyInCart: (id: import("@/types/db").RowId) => number;
   filter: string;
 }) {
   const filtered = items.filter((i) =>

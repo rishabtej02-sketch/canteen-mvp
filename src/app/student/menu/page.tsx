@@ -100,17 +100,17 @@ export default function StudentMenuPage() {
     setTimeout(() => setToast(null), 1400);
   }, []);
 
-  const inc = (id: number) =>
+  const inc = (id: import("@/types/db").RowId) =>
     setLines((p) => p.map((l) => (l.item.id === id ? { ...l, qty: l.qty + 1 } : l)));
-  const dec = (id: number) =>
+  const dec = (id: import("@/types/db").RowId) =>
     setLines((p) =>
       p
         .map((l) => (l.item.id === id ? { ...l, qty: l.qty - 1 } : l))
         .filter((l) => l.qty > 0)
     );
-  const remove = (id: number) => setLines((p) => p.filter((l) => l.item.id !== id));
+  const remove = (id: import("@/types/db").RowId) => setLines((p) => p.filter((l) => l.item.id !== id));
 
-  const qtyInCart = (id: number) => lines.find((l) => l.item.id === id)?.qty ?? 0;
+  const qtyInCart = (id: import("@/types/db").RowId) => lines.find((l) => l.item.id === id)?.qty ?? 0;
 
   const checkout = async () => {
     if (!me || !lines.length) return;

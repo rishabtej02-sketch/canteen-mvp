@@ -15,9 +15,9 @@ export function Cart({
   disabledReason,
 }: {
   lines: CartLine[];
-  onInc: (id: number) => void;
-  onDec: (id: number) => void;
-  onRemove: (id: number) => void;
+  onInc: (id: import("@/types/db").RowId) => void;
+  onDec: (id: import("@/types/db").RowId) => void;
+  onRemove: (id: import("@/types/db").RowId) => void;
   onCheckout: () => void;
   submitting: boolean;
   disabled?: boolean;

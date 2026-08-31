@@ -19,7 +19,7 @@ const TAB_LABEL: Record<OrderStatus, string> = {
 export default function KdsPage() {
   const supabase = getSupabase();
   const [orders, setOrders] = useState<OrderWithItems[]>([]);
-  const [busyId, setBusyId] = useState<number | null>(null);
+  const [busyId, setBusyId] = useState<string | number | null>(null);
   const [tab, setTab] = useState<OrderStatus>("pending");
   const [err, setErr] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
