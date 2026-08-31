@@ -117,11 +117,32 @@ export default function StudentMenuPage() {
     setErr(null);
     setSubmitting(true);
     try {
-      const total = lines.reduce((s, l) => s + l.qty * l.item.price, 0);
+      // Build the items payload FIRST, with explicit Number() coercion, so
+      // string values coming back from Postgres numeric columns can never
+      // produce a NaN total. Derive `total` from this same array so what we
+      // charge always matches what we insert.
+      const rows = lines.map((l) => ({
+        item_id: l.item.id,
+        quantity: Number(l.qty) || 0,
+        unit_price: Number(l.item.price) || 0,
+      }));
+      const total = rows.reduce((s, r) => s + r.quantity * r.unit_price, 0);
+
+      if (total <= 0 || rows.some((r) => r.quantity <= 0 || r.unit_price <= 0)) {
+        throw new Error(
+          "Cart total is zero — refresh the menu and add items again."
+        );
+      }
+
       const eta = Math.max(
         60,
-        ...lines.map((l) => (Number(l.item.prep_seconds) || 300) * Math.max(1, Math.ceil(l.qty / 2)))
+        ...lines.map(
+          (l) =>
+            (Number(l.item.prep_seconds) || 300) *
+            Math.max(1, Math.ceil(l.qty / 2))
+        )
       );
+
       const { data: order, error: e1 } = await supabase
         .from("orders")
         .insert({
@@ -133,14 +154,18 @@ export default function StudentMenuPage() {
         .select()
         .single();
       if (e1 || !order) throw e1 ?? new Error("Order insert failed");
-      const rows = lines.map((l) => ({
-        order_id: order.id,
-        item_id: l.item.id,
-        quantity: l.qty,
-        unit_price: l.item.price,
-      }));
-      const { error: e2 } = await supabase.from("order_items").insert(rows);
-      if (e2) throw e2;
+
+      const itemsPayload = rows.map((r) => ({ ...r, order_id: order.id }));
+      const { error: e2 } = await supabase
+        .from("order_items")
+        .insert(itemsPayload);
+      if (e2) {
+        // Items insert failed → the parent order is now orphaned (0 items,
+        // total set but no lines). Best-effort delete so it doesn't clutter
+        // the student's history or the KDS.
+        await supabase.from("orders").delete().eq("id", order.id);
+        throw e2;
+      }
       setLines([]);
       setToast("Order placed 🎉");
       setTimeout(() => setToast(null), 1800);
