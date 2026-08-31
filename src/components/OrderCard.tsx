@@ -1,7 +1,7 @@
 "use client";
 
 import { StatusPill } from "./StatusPill";
-import { inr, fmtTime, secsAgo, secsToMin, initials } from "@/lib/format";
+import { inr, fmtTime, secsAgo, secsToMin, initials, shortId } from "@/lib/format";
 import type { OrderStatus, OrderWithItems } from "@/types/db";
 
 const NEXT_STATUS: Record<OrderStatus, OrderStatus | null> = {
@@ -51,8 +51,11 @@ export function OrderCard({
             {initials(order.profiles?.full_name ?? "S")}
           </div>
           <div>
-            <div className="text-xs uppercase tracking-wide text-slate-500">
-              Order #{order.id}
+            <div
+              className="text-xs uppercase tracking-wide text-slate-500"
+              title={`Order ${order.id}`}
+            >
+              Order #{shortId(order.id)}
             </div>
             <div className="text-sm font-semibold text-slate-800">
               {order.profiles?.full_name ?? "Student"}

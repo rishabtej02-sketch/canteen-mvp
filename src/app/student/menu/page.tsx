@@ -9,7 +9,7 @@ import { StatusPill } from "@/components/StatusPill";
 import { OrderProgress } from "@/components/OrderProgress";
 import { EmptyState } from "@/components/EmptyState";
 import { getStudent } from "@/lib/auth";
-import { inr, fmtTime } from "@/lib/format";
+import { inr, fmtTime, shortId } from "@/lib/format";
 import type { CartLine, MenuItem, OrderRow } from "@/types/db";
 
 const LS_CART = "canteen.cart.v2";
@@ -186,7 +186,9 @@ export default function StudentMenuPage() {
             {active.map((o) => (
               <div key={o.id} className="card p-4 animate-fade-up">
                 <div className="mb-2 flex items-center justify-between">
-                  <div className="text-sm font-bold">Order #{o.id}</div>
+                  <div className="text-sm font-bold" title={`Order ${o.id}`}>
+                    Order #{shortId(o.id)}
+                  </div>
                   <StatusPill status={o.status} animated />
                 </div>
                 <OrderProgress status={o.status} />

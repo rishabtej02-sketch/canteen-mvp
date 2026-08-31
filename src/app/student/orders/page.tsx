@@ -7,10 +7,11 @@ import { StatusPill } from "@/components/StatusPill";
 import { OrderProgress } from "@/components/OrderProgress";
 import { SpendChart } from "@/components/SpendChart";
 import { EmptyState } from "@/components/EmptyState";
-import { inr, fmtDate, fmtTime } from "@/lib/format";
+import { inr, fmtDateTime, fmtDayHeading, shortId } from "@/lib/format";
 import type { OrderWithItems } from "@/types/db";
 
 const RANGE_DAYS = 14;
+const PAGE_SIZE = 20;
 
 export default function StudentOrdersPage() {
   const supabase = getSupabase();
@@ -19,6 +20,7 @@ export default function StudentOrdersPage() {
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState<string | null>(null);
   const [tab, setTab] = useState<"all" | "active" | "past">("all");
+  const [page, setPage] = useState(1);
 
   useEffect(() => {
     if (!me) return;
@@ -28,13 +30,19 @@ export default function StudentOrdersPage() {
         .from("orders")
         .select("*, order_items(*, menu_items(name))")
         .eq("student_id", me.id)
-        .order("placed_at", { ascending: false })
-        .limit(200);
+        .order("placed_at", { ascending: false, nullsFirst: false })
+        .limit(500);
       if (error) setErr(error.message);
       setOrders((data ?? []) as unknown as OrderWithItems[]);
       setLoading(false);
     })();
-  }, [supabase, me?.id]); // eslint-disable-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [supabase, me?.id]);
+
+  // Reset to page 1 whenever the tab filter changes.
+  useEffect(() => {
+    setPage(1);
+  }, [tab]);
 
   const stats = useMemo(() => {
     const totalSpend = orders
@@ -42,14 +50,14 @@ export default function StudentOrdersPage() {
       .reduce((s, o) => s + Number(o.total_amount ?? 0), 0);
     const nOrders = orders.length;
     const now = Date.now();
+    const thisMonth = new Date().getMonth();
+    const thisYear = new Date().getFullYear();
     const spendThisMonth = orders
-      .filter(
-        (o) =>
-          o.status !== "cancelled" &&
-          o.placed_at &&
-          new Date(o.placed_at).getMonth() === new Date().getMonth() &&
-          new Date(o.placed_at).getFullYear() === new Date().getFullYear()
-      )
+      .filter((o) => {
+        if (o.status === "cancelled" || !o.placed_at) return false;
+        const d = new Date(o.placed_at);
+        return d.getMonth() === thisMonth && d.getFullYear() === thisYear;
+      })
       .reduce((s, o) => s + Number(o.total_amount ?? 0), 0);
     const itemsCount = orders.reduce(
       (s, o) =>
@@ -57,7 +65,7 @@ export default function StudentOrdersPage() {
       0
     );
 
-    // Spend per day for the last N days
+    // Spend per day for the last N days (local time buckets).
     const dayKey = (t: number) => {
       const d = new Date(t);
       return `${d.getFullYear()}-${d.getMonth() + 1}-${d.getDate()}`;
@@ -75,13 +83,15 @@ export default function StudentOrdersPage() {
     for (const o of orders) {
       if (o.status === "cancelled" || !o.placed_at) continue;
       const t = new Date(o.placed_at).getTime();
+      // Skip future-dated or rows outside window.
+      if (t > now) continue;
       if (now - t > RANGE_DAYS * 86400 * 1000) continue;
       const k = dayKey(t);
       if (buckets[k]) buckets[k].value += Number(o.total_amount ?? 0);
     }
     const points = Object.values(buckets);
 
-    // top items
+    // Top items.
     const itemMap: Record<string, { name: string; qty: number; spend: number }> = {};
     for (const o of orders) {
       if (o.status === "cancelled") continue;
@@ -105,12 +115,34 @@ export default function StudentOrdersPage() {
     return true;
   });
 
+  const pageCount = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+  const currentPage = Math.min(page, pageCount);
+  const paged = filtered.slice(
+    (currentPage - 1) * PAGE_SIZE,
+    currentPage * PAGE_SIZE
+  );
+
+  // Group the currently-paged rows by day heading for a cleaner list.
+  const grouped = useMemo(() => {
+    const out: { key: string; label: string; rows: OrderWithItems[] }[] = [];
+    for (const o of paged) {
+      const label = fmtDayHeading(o.placed_at);
+      const last = out[out.length - 1];
+      if (last && last.label === label) {
+        last.rows.push(o);
+      } else {
+        out.push({ key: label + "-" + out.length, label, rows: [o] });
+      }
+    }
+    return out;
+  }, [paged]);
+
   if (!me) return null;
 
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold">My orders & spend</h1>
+        <h1 className="text-2xl font-bold">My orders &amp; spend</h1>
         <p className="text-sm text-slate-500">
           Every order you&apos;ve placed, plus how much you&apos;re spending in the canteen.
         </p>
@@ -149,9 +181,7 @@ export default function StudentOrdersPage() {
         <div className="card p-5 animate-fade-up">
           <div className="mb-2 flex items-center justify-between">
             <div className="text-sm font-semibold">Spend · last 14 days</div>
-            <div className="text-xs text-slate-500">
-              Bars = ₹ per day
-            </div>
+            <div className="text-xs text-slate-500">Bars = ₹ per day</div>
           </div>
           <SpendChart points={stats.points} />
         </div>
@@ -218,54 +248,104 @@ export default function StudentOrdersPage() {
             message={tab === "all" ? "Place your first order from the Menu." : `Nothing in "${tab}".`}
           />
         ) : (
-          <ul className="space-y-2">
-            {filtered.map((o) => (
-              <li key={o.id} className="card p-4 animate-fade-up">
-                <div className="flex flex-wrap items-center justify-between gap-3">
-                  <div className="flex items-center gap-3">
-                    <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-brand-50 text-lg ring-1 ring-brand-100">
-                      #{o.id}
+          <>
+            <div className="space-y-5">
+              {grouped.map((g) => (
+                <div key={g.key}>
+                  <div className="mb-2 flex items-center gap-2">
+                    <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                      {g.label}
                     </div>
-                    <div>
-                      <div className="text-sm font-semibold">
-                        {fmtDate(o.placed_at)} · {fmtTime(o.placed_at)}
-                      </div>
-                      <div className="text-xs text-slate-500">
-                        {(o.order_items ?? []).length} lines ·{" "}
-                        {(o.order_items ?? []).reduce((a, li) => a + (li.quantity ?? 0), 0)} items
-                      </div>
+                    <div className="h-px flex-1 bg-slate-200" />
+                    <div className="text-xs text-slate-400">
+                      {g.rows.length} {g.rows.length === 1 ? "order" : "orders"}
                     </div>
                   </div>
-                  <div className="flex items-center gap-3">
-                    <StatusPill status={o.status} animated />
-                    <div className="text-base font-bold text-slate-900">
-                      {inr(o.total_amount)}
-                    </div>
-                  </div>
+                  <ul className="space-y-2">
+                    {g.rows.map((o) => {
+                      const totalQty = (o.order_items ?? []).reduce(
+                        (a, li) => a + (li.quantity ?? 0),
+                        0
+                      );
+                      return (
+                        <li key={o.id} className="card p-4 animate-fade-up">
+                          <div className="flex flex-wrap items-center justify-between gap-3">
+                            <div className="flex min-w-0 items-center gap-3">
+                              <div
+                                className="flex h-11 shrink-0 items-center justify-center rounded-xl bg-brand-50 px-2 text-sm font-bold tracking-wide text-brand-700 ring-1 ring-brand-100"
+                                title={`Order ${o.id}`}
+                              >
+                                #{shortId(o.id)}
+                              </div>
+                              <div className="min-w-0">
+                                <div className="truncate text-sm font-semibold">
+                                  {fmtDateTime(o.placed_at)}
+                                </div>
+                                <div className="text-xs text-slate-500">
+                                  {(o.order_items ?? []).length} lines · {totalQty} items
+                                </div>
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-3">
+                              <StatusPill status={o.status} animated />
+                              <div className="text-base font-bold text-slate-900">
+                                {inr(o.total_amount)}
+                              </div>
+                            </div>
+                          </div>
+                          <ul className="mt-3 flex flex-wrap gap-1 text-xs text-slate-600">
+                            {(o.order_items ?? []).slice(0, 8).map((li) => (
+                              <li
+                                key={li.id}
+                                className="rounded-full bg-slate-100 px-2 py-0.5"
+                              >
+                                {li.quantity}× {li.menu_items?.name ?? `Item ${li.item_id}`}
+                              </li>
+                            ))}
+                            {(o.order_items ?? []).length > 8 && (
+                              <li className="text-slate-400">
+                                +{(o.order_items ?? []).length - 8} more
+                              </li>
+                            )}
+                          </ul>
+                          {["pending", "preparing", "ready"].includes(o.status) && (
+                            <div className="mt-3">
+                              <OrderProgress status={o.status} />
+                            </div>
+                          )}
+                        </li>
+                      );
+                    })}
+                  </ul>
                 </div>
-                <ul className="mt-3 flex flex-wrap gap-1 text-xs text-slate-600">
-                  {(o.order_items ?? []).slice(0, 8).map((li) => (
-                    <li
-                      key={li.id}
-                      className="rounded-full bg-slate-100 px-2 py-0.5"
-                    >
-                      {li.quantity}× {li.menu_items?.name ?? `Item ${li.item_id}`}
-                    </li>
-                  ))}
-                  {(o.order_items ?? []).length > 8 && (
-                    <li className="text-slate-400">
-                      +{(o.order_items ?? []).length - 8} more
-                    </li>
-                  )}
-                </ul>
-                {["pending", "preparing", "ready"].includes(o.status) && (
-                  <div className="mt-3">
-                    <OrderProgress status={o.status} />
-                  </div>
-                )}
-              </li>
-            ))}
-          </ul>
+              ))}
+            </div>
+
+            {/* Pagination */}
+            {pageCount > 1 && (
+              <div className="mt-5 flex items-center justify-between">
+                <div className="text-xs text-slate-500">
+                  Page {currentPage} of {pageCount} · {filtered.length} orders
+                </div>
+                <div className="flex items-center gap-1">
+                  <button
+                    onClick={() => setPage((p) => Math.max(1, p - 1))}
+                    disabled={currentPage <= 1}
+                    className="btn text-xs text-slate-600 hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-40"
+                  >
+                    ← Prev
+                  </button>
+                  <button
+                    onClick={() => setPage((p) => Math.min(pageCount, p + 1))}
+                    disabled={currentPage >= pageCount}
+                    className="btn text-xs text-slate-600 hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-40"
+                  >
+                    Next →
+                  </button>
+                </div>
+              </div>
+            )}
+          </>
         )}
       </div>
     </div>
