@@ -35,7 +35,7 @@ WITH salted AS (
     id,
     -- Deterministic non-negative int per row id (works for uuid or bigint).
     abs(hashtext(id::text))::bigint AS h
-  FROM orders
+  FROM public.orders
   WHERE status = 'completed'
 ),
 placed AS (
@@ -75,7 +75,7 @@ computed AS (
     dwell_min
   FROM placed
 )
-UPDATE orders o
+UPDATE public.orders o
 SET
   placed_at    = c.new_placed_at,
   ready_at     = c.new_placed_at + make_interval(mins => c.prep_min),
@@ -87,7 +87,7 @@ WHERE o.id = c.id;
 -- Safety net: if any row ended up dated in the future (shouldn't happen
 -- with the UTC anchor above, but guard against clock skew), pull it back
 -- to now() - 1 hour so KDS age tinting stays sane.
-UPDATE orders
+UPDATE public.orders
 SET
   placed_at    = now() - interval '1 hour',
   ready_at     = now() - interval '45 minutes',
@@ -98,29 +98,29 @@ WHERE status = 'completed'
 COMMIT;
 
 -- ─────────────────────────────────────────────────────────────────────────────
--- Verification queries — run these after to confirm the spread worked.
+-- Verification queries — run these AFTER the commit above to confirm.
 -- ─────────────────────────────────────────────────────────────────────────────
 
--- 1) You should see roughly 14 distinct days, each with ~10-20 orders.
+-- 1) You should see roughly 14 distinct days, each with ~10-20 rows.
 SELECT
   (placed_at AT TIME ZONE 'Asia/Kolkata')::date AS day_ist,
-  count(*)  AS orders,
-  sum(total_amount)::int AS revenue
-FROM orders
+  count(*)                                       AS n_orders,
+  sum(total_amount)::int                         AS revenue
+FROM public.orders
 WHERE status = 'completed'
 GROUP BY 1
 ORDER BY 1 DESC;
 
 -- 2) Zero rows should be in the future.
 SELECT count(*) AS future_rows
-FROM orders
+FROM public.orders
 WHERE status = 'completed' AND placed_at > now();
 
--- 3) Hour-of-day distribution — lunch (12-14) and tea (16-18) should be the peaks.
+-- 3) Hour-of-day distribution — lunch (12-14) and tea (16-18) should peak.
 SELECT
   extract(hour FROM placed_at AT TIME ZONE 'Asia/Kolkata')::int AS hour_ist,
-  count(*) AS orders
-FROM orders
+  count(*)                                                        AS n_orders
+FROM public.orders
 WHERE status = 'completed'
 GROUP BY 1
 ORDER BY 1;
