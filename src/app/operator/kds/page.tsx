@@ -26,13 +26,16 @@ export default function KdsPage() {
   const [loading, setLoading] = useState(true);
 
   const load = useCallback(async () => {
+    // Fetch NEWEST 120 first. (Bug fix: was ascending:true, which grabbed the
+    // OLDEST 120 -> once completed orders exceed 120, new orders fell outside
+    // the window and never appeared in KDS.)
     const { data, error } = await supabase
       .from("orders")
       .select(
         "*, profiles(full_name, email), order_items(*, menu_items(name))"
       )
       .in("status", ["pending", "preparing", "ready", "completed"])
-      .order("placed_at", { ascending: true })
+      .order("placed_at", { ascending: false })
       .limit(120);
     if (error) setErr(error.message);
     setOrders((data ?? []) as unknown as OrderWithItems[]);
@@ -98,7 +101,14 @@ export default function KdsPage() {
       .reduce((s, o) => s + Number(o.total_amount ?? 0), 0);
   }, [orders]);
 
-  const visible = orders.filter((o) => o.status === tab);
+  // Display oldest-first within a tab (kitchen FIFO), even though we fetch
+  // newest-first to keep active orders inside the 120-row window.
+  const visible = orders
+    .filter((o) => o.status === tab)
+    .sort(
+      (a: OrderWithItems, b: OrderWithItems) =>
+        new Date(a.placed_at).getTime() - new Date(b.placed_at).getTime()
+    );
 
   const advance = async (o: OrderWithItems, next: OrderStatus) => {
     setBusyId(o.id);
