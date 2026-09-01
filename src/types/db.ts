@@ -78,3 +78,27 @@ export interface DailyForecast {
   model_version: string;
   created_at: string;
 }
+
+export interface Order {
+  id: string
+  student_id: string
+  status: 'pending' | 'preparing' | 'ready' | 'completed' | 'cancelled'
+  total_amount: number
+  placed_at: string
+  ready_at: string | null
+  completed_at: string | null
+  // ETA fields (Phase 3)
+  eta_seconds: number | null
+  predicted_eta_min: number | null
+  eta_lower_bound: number | null
+  eta_upper_bound: number | null
+  queue_position_at_order: number | null
+}
+
+export interface KitchenSettings {
+  id: number
+  speed_mode: 'Normal' | 'Rush' | 'Slow'
+  throughput_per_min: number
+  updated_by: string | null
+  updated_at: string
+}

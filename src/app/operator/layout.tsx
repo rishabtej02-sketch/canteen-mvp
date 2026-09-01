@@ -11,6 +11,7 @@ const NAV = [
   { href: "/operator/kds",       label: "Kitchen Display", icon: "🍳" },
   { href: "/operator/stock",     label: "Stock",           icon: "📦" },
   { href: "/operator/analytics", label: "Analytics",       icon: "📈" },
+  { href: '/operator/kitchen', label: 'Kitchen', icon: '⚙️' },
 ];
 
 export default function OperatorLayout({ children }: { children: React.ReactNode }) {

@@ -9,6 +9,7 @@ import { SpendChart } from "@/components/SpendChart";
 import { EmptyState } from "@/components/EmptyState";
 import { inr, fmtDateTime, fmtDayHeading, shortId } from "@/lib/format";
 import type { OrderWithItems } from "@/types/db";
+import EtaCountdown from '@/components/EtaCountdown'
 
 const RANGE_DAYS = 14;
 const PAGE_SIZE = 20;
@@ -309,10 +310,24 @@ export default function StudentOrdersPage() {
                             )}
                           </ul>
                           {["pending", "preparing", "ready"].includes(o.status) && (
-                            <div className="mt-3">
-                              <OrderProgress status={o.status} />
-                            </div>
-                          )}
+  <div className="mt-3 space-y-3">
+    <EtaCountdown
+      placedAt={o.placed_at}
+      etaSeconds={(o as any).eta_seconds}
+      readyAt={(o as any).ready_at}
+      etaLowerMin={(o as any).eta_lower_bound}
+      etaUpperMin={(o as any).eta_upper_bound}
+      reason={
+        (o as any).queue_position_at_order != null
+          ? `${(o as any).queue_position_at_order} order${
+              (o as any).queue_position_at_order === 1 ? "" : "s"
+            } ahead when you ordered`
+          : null
+      }
+    />
+    <OrderProgress status={o.status} />
+  </div>
+)}
                         </li>
                       );
                     })}

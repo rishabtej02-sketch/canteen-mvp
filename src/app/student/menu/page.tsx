@@ -11,6 +11,7 @@ import { EmptyState } from "@/components/EmptyState";
 import { getStudent } from "@/lib/auth";
 import { inr, fmtTime, shortId } from "@/lib/format";
 import type { CartLine, MenuItem, OrderRow } from "@/types/db";
+import { predictEta } from '@/lib/eta'
 
 const LS_CART = "canteen.cart.v2";
 
@@ -200,6 +201,9 @@ export default function StudentMenuPage() {
         await supabase.from("orders").delete().eq("id", order.id);
         throw e2;
       }
+      // Phase 3: fire-and-forget ETA prediction. Non-blocking.
+      // Orders page realtime picks it up when written.
+      predictEta(order.id).catch(() => {});
       setLines([]);
       setToast("Order placed 🎉");
       setTimeout(() => setToast(null), 1800);
