@@ -6,8 +6,14 @@
 // depletion_alerts (KDS subscribes via realtime).
 //
 // Explainable model (no black box), mirrors eta_v1's transparency:
-//   remaining_to_cook[item] = max(day_target - sold_today, in_flight_queue)
+//   placed_today[item]      = sold_today + in_flight_queue
+//   remaining_to_cook[item] = max(day_target - placed_today, 0)
 //   future_burn[ingredient] = Σ remaining_to_cook[item] * qty_per_serving
+//
+// NOTE (Phase 4b): stock_qty is decremented on order PLACEMENT by the
+// trg_decrement_ingredients trigger, so sold + queue are ALREADY reflected in
+// current stock. Future burn therefore counts only demand not yet placed —
+// counting the queue again would double-subtract it.
 //   burn_per_min            = future_burn / remaining_service_min
 //   minutes_to_empty        = stock_qty / burn_per_min
 //   projected_empty_at      = now + minutes_to_empty
@@ -123,7 +129,10 @@ Deno.serve(async (req) => {
       const target = targetByItem.get(itemId) ?? 0
       const sold = soldQtyByItem.get(itemId) ?? 0
       const queue = queueQtyByItem.get(itemId) ?? 0
-      const remaining = Math.max(target - sold, queue)
+      // stock already reflects placed orders (sold+queue) via the decrement
+      // trigger; future burn = only demand not yet placed.
+      const placed = sold + queue
+      const remaining = Math.max(target - placed, 0)
       remainingByItem.set(itemId, remaining)
     }
 
