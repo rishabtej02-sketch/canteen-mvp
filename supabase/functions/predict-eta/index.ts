@@ -12,6 +12,11 @@
 //   upper    = eta_sec * 1.20
 //
 // Mode multipliers: Normal=1.0, Rush=1.4, Slow=0.8
+//
+// HK1 FIX (Session 5): model_runs insert previously used inputs/outputs jsonb
+// columns that DO NOT EXIST -> insert threw -> try/catch swallowed it -> 0 audit
+// rows. Real columns: model_name, run_at, status, items_scored, duration_ms,
+// notes. Payload now serialized into notes; items_scored + duration_ms set.
 // ============================================================================
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
@@ -47,6 +52,8 @@ Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: CORS })
   }
+
+  const t0 = Date.now()
 
   try {
     const body = await req.json().catch(() => ({}))
@@ -144,25 +151,26 @@ Deno.serve(async (req) => {
     if (upErr) throw new Error(`orders update failed: ${upErr.message}`)
 
     // --- 7. Audit log (best-effort; don't fail the response) -----------------
+    // FIX: real model_runs columns only. Full input/output payload -> notes.
     try {
       await supabase.from('model_runs').insert({
         model_name: MODEL_NAME,
         run_at: new Date().toISOString(),
-        inputs: {
+        status: 'success',
+        items_scored: itemIds.length,
+        duration_ms: Date.now() - t0,
+        notes: JSON.stringify({
           order_id: orderId,
           queue_depth: queue,
           throughput_per_min: throughput,
           mode,
           slowest_prep_sec: slowestPrep,
           items_count: itemIds.length,
-        },
-        outputs: {
           eta_sec: etaSec,
           lower_sec: lowerSec,
           upper_sec: upperSec,
           eta_min: etaMin,
-        },
-        status: 'success',
+        }),
       })
     } catch (auditErr) {
       console.error('model_runs insert failed (non-fatal):', auditErr)

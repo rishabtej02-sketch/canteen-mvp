@@ -1,4 +1,7 @@
-export type ItemCategory = "mains" | "snacks" | "beverages" | "desserts";
+// DB enum (verified via SELECT DISTINCT category): lunch_dinner, snacks,
+// beverages, desserts. Was "mains" — wrong. If any code compares
+// category === 'mains', it is already broken vs the DB; grep and fix.
+export type ItemCategory = "lunch_dinner" | "snacks" | "beverages" | "desserts";
 export type OrderStatus =
   | "pending"
   | "preparing"
@@ -39,10 +42,16 @@ export interface OrderRow {
   student_id: string | null;
   status: OrderStatus;
   total_amount: number;
-  eta_seconds: number | null;
   placed_at: string;
   ready_at: string | null;
   completed_at: string | null;
+  // ETA fields (Phase 3) — added here so OrderWithItems inherits them and
+  // the `(o as any).eta_*` casts in the orders page can be removed.
+  eta_seconds: number | null;
+  predicted_eta_min: number | null;
+  eta_lower_bound: number | null;
+  eta_upper_bound: number | null;
+  queue_position_at_order: number | null;
 }
 
 export interface OrderItemRow {
@@ -79,6 +88,9 @@ export interface DailyForecast {
   created_at: string;
 }
 
+// NOTE: near-duplicate of OrderRow (now that OrderRow carries ETA fields).
+// Left in place to avoid breaking existing imports. Consolidate onto OrderRow
+// in a later cleanup pass.
 export interface Order {
   id: string
   student_id: string

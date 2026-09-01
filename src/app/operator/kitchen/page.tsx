@@ -6,6 +6,11 @@
 //   2. Throughput tuning — daily suggestion after MAPE review, operator decides
 //
 // All operator decisions logged to model_runs (status='human_override').
+//
+// HK1 FIX (Session 5): audit insert used inputs/outputs jsonb columns that do
+// not exist -> insert threw -> swallowed -> 0 override rows. Real columns:
+// model_name, run_at, status, items_scored, duration_ms, notes. Payload now
+// serialized into notes.
 // ============================================================================
 'use client'
 
@@ -211,22 +216,22 @@ export default function KitchenPage() {
     }
 
     // Audit: operator tuning decision (best-effort)
+    // FIX: real model_runs columns only. Decision payload -> notes.
     try {
       await supabase.from('model_runs').insert({
         model_name: 'eta_v1',
         run_at: new Date().toISOString(),
-        inputs: {
+        status: 'human_override',
+        items_scored: 0,
+        notes: JSON.stringify({
           action: 'throughput_tuning',
           source,
           previous: ks.throughput_per_min,
-          mape_yesterday: stats?.mape_pct ?? null,
-          suggested: stats?.suggested_throughput ?? null,
-        },
-        outputs: {
           new_throughput: value,
           accepted_suggestion: source === 'suggestion',
-        },
-        status: 'human_override',
+          mape_yesterday: stats?.mape_pct ?? null,
+          suggested: stats?.suggested_throughput ?? null,
+        }),
       })
     } catch (e) {
       console.error('audit log failed', e)
