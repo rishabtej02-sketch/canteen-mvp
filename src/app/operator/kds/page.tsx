@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { getSupabase } from "@/lib/supabase";
 import { OrderCard } from "@/components/OrderCard";
 import { EmptyState } from "@/components/EmptyState";
+import DepletionBanner from "@/components/DepletionBanner";
 import { inr } from "@/lib/format";
 import type { OrderStatus, OrderWithItems } from "@/types/db";
 
@@ -156,6 +157,11 @@ export default function KdsPage() {
             </div>
           </div>
         </div>
+      </div>
+
+      {/* Phase 4: projected ingredient stockouts (renders only when at-risk) */}
+      <div className="mb-4">
+        <DepletionBanner />
       </div>
 
       <div className="mb-4 flex flex-wrap gap-1">
