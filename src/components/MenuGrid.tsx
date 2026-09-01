@@ -8,6 +8,7 @@ import {
   CATEGORY_LABEL,
   CATEGORY_ORDER,
 } from "./CategoryIcon";
+import StockBadge from "./StockBadge";
 
 export function MenuGrid({
   items,
@@ -33,7 +34,6 @@ export function MenuGrid({
   const sectionRefs = useRef<Record<string, HTMLElement | null>>({});
   const catsKey = cats.join("|");
 
-  // Auto-highlight the category currently in view.
   useEffect(() => {
     if (!cats.length) return;
     setActive((prev) => (cats.includes(prev) ? prev : cats[0]));
@@ -128,19 +128,22 @@ export function MenuGrid({
               {byCat[cat].map((it) => {
                 const q = qtyInCart(it.id);
                 const mins = prepMinutes(it.prep_seconds);
+                const soldOut = !it.is_available || (it.stock_today ?? 1) <= 0;
                 return (
                   <div
                     key={it.id}
-                    className="card-hover flex flex-col p-4 animate-fade-up"
+                    className={`card-hover flex flex-col p-4 animate-fade-up transition ${
+                      soldOut ? "opacity-60 grayscale" : ""
+                    }`}
                   >
                     <div className="flex items-start gap-3">
                       <CategoryIcon category={it.category} />
                       <div className="min-w-0 flex-1">
                         <div className="flex items-start justify-between gap-2">
-                          <div className="truncate font-semibold text-slate-900">
+                          <div className={`truncate font-semibold ${soldOut ? "text-slate-500 line-through" : "text-slate-900"}`}>
                             {it.name}
                           </div>
-                          <div className="whitespace-nowrap font-bold text-brand-700">
+                          <div className={`whitespace-nowrap font-bold ${soldOut ? "text-slate-400" : "text-brand-700"}`}>
                             {inr(it.price)}
                           </div>
                         </div>
@@ -151,20 +154,19 @@ export function MenuGrid({
                               {q} in cart
                             </span>
                           )}
-                          {!it.is_available && (
-                            <span className="badge bg-rose-100 text-rose-700">
-                              Sold out
-                            </span>
-                          )}
+                          <StockBadge
+                            stock={it.stock_today ?? 0}
+                            cap={it.stock_cap ?? 0}
+                          />
                         </div>
                       </div>
                     </div>
                     <button
-                      disabled={!it.is_available}
+                      disabled={soldOut}
                       onClick={() => onAdd(it)}
-                      className="btn-primary mt-4 w-full"
+                      className="btn-primary mt-4 w-full disabled:cursor-not-allowed disabled:opacity-50"
                     >
-                      {it.is_available ? (q > 0 ? "Add another" : "Add to cart") : "Unavailable"}
+                      {soldOut ? "Sold out" : (q > 0 ? "Add another" : "Add to cart")}
                     </button>
                   </div>
                 );

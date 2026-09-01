@@ -26,19 +26,34 @@ export default function StudentMenuPage() {
   const [filter, setFilter] = useState("");
   const [toast, setToast] = useState<string | null>(null);
 
-  // load menu
+  // load menu + realtime stock updates
   useEffect(() => {
-    (async () => {
-      setLoading(true);
+    let cancelled = false;
+    const loadMenu = async () => {
       const { data, error } = await supabase
         .from("menu_items")
         .select("*")
         .order("category")
         .order("name");
+      if (cancelled) return;
       if (error) setErr(error.message);
       setItems((data ?? []) as MenuItem[]);
       setLoading(false);
-    })();
+    };
+    setLoading(true);
+    loadMenu();
+    const ch = supabase
+      .channel("menu-stock-live")
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "menu_items" },
+        () => loadMenu()
+      )
+      .subscribe();
+    return () => {
+      cancelled = true;
+      supabase.removeChannel(ch);
+    };
   }, [supabase]);
 
   // hydrate cart per-user
@@ -117,6 +132,25 @@ export default function StudentMenuPage() {
     setErr(null);
     setSubmitting(true);
     try {
+      // Stock precheck: re-fetch live stock for cart items so a race with
+      // another student (or a restock/decrement) can't put us over the cap.
+      const ids = lines.map((l) => l.item.id);
+      const { data: fresh } = await supabase
+        .from("menu_items")
+        .select("id, name, stock_today, is_available")
+        .in("id", ids as any);
+      const stockById = new Map(
+        (fresh ?? []).map((r: any) => [String(r.id), r])
+      );
+      const blocked = lines.filter((l) => {
+        const s = stockById.get(String(l.item.id));
+        return !s || !s.is_available || (s.stock_today ?? 0) < l.qty;
+      });
+      if (blocked.length) {
+        const names = blocked.map((l) => l.item.name).join(", ");
+        throw new Error(`Not enough stock: ${names}. Refresh the menu.`);
+      }
+
       // Build the items payload FIRST, with explicit Number() coercion, so
       // string values coming back from Postgres numeric columns can never
       // produce a NaN total. Derive `total` from this same array so what we

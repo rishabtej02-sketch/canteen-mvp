@@ -21,6 +21,9 @@ export interface MenuItem {
   prep_seconds: number;
   image_url: string | null;
   created_at: string;
+  // Phase 1 (stock):
+  stock_today?: number;
+  stock_cap?: number;
 }
 
 export interface Profile {
@@ -60,4 +63,18 @@ export interface OrderWithItems extends OrderRow {
     menu_items?: Partial<Pick<MenuItem, "name" | "prep_seconds" | "category">> | null;
   })[];
   profiles?: Pick<Profile, "full_name" | "email"> | null;
+}
+
+// Phase 2 (forecast):
+export interface DailyForecast {
+  id: number;
+  item_id: RowId;
+  forecast_date: string;
+  predicted_qty: number;
+  actual_qty: number | null;
+  accepted_qty: number | null;
+  accepted_by: string | null;
+  accepted_at: string | null;
+  model_version: string;
+  created_at: string;
 }

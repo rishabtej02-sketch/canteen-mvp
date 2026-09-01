@@ -7,7 +7,9 @@ import { Logo } from "@/components/Logo";
 import { clearOperator, getOperator, type OperatorSession } from "@/lib/auth";
 
 const NAV = [
+  { href: "/operator/prep",      label: "Morning Prep",    icon: "🌅" },
   { href: "/operator/kds",       label: "Kitchen Display", icon: "🍳" },
+  { href: "/operator/stock",     label: "Stock",           icon: "📦" },
   { href: "/operator/analytics", label: "Analytics",       icon: "📈" },
 ];
 
