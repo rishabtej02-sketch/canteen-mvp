@@ -37,14 +37,19 @@ export default function OperatorPrepPage() {
   const [historyOpen, setHistoryOpen] = useState(false);
   const [accuracy, setAccuracy] = useState<{ mape: number; n: number } | null>(null);
 
-  const today = new Date().toISOString().slice(0, 10);
+  // Prep screen shows forecasts for TOMORROW — that's what the operator is prepping for.
+  const targetDate = (() => {
+    const d = new Date();
+    d.setUTCDate(d.getUTCDate() + 1);
+    return d.toISOString().slice(0, 10);
+  })();
 
   const load = async () => {
     // Today's forecasts joined with menu
     const { data: fdata } = await supabase
       .from("daily_forecasts")
       .select("id, item_id, predicted_qty, accepted_qty, accepted_by, accepted_at, actual_qty, item:menu_items(id, name, category, stock_today, stock_cap)")
-      .eq("forecast_date", today)
+      .eq("forecast_date", targetDate)
       .eq("model_version", "exp_smooth_v1");
 
     const mapped: Row[] = (fdata ?? []).map((f: any) => ({
@@ -188,7 +193,7 @@ export default function OperatorPrepPage() {
         <div className="rounded-2xl bg-white p-8 text-center text-slate-400">Loading…</div>
       ) : rows.length === 0 ? (
         <div className="rounded-2xl bg-white p-8 text-center text-slate-500">
-          No forecasts for today yet. Run the <code className="rounded bg-slate-100 px-1 py-0.5">forecast-daily</code> Edge Function or wait for the 06:00 IST cron.
+          No forecasts for tomorrow yet. Run the <code className="rounded bg-slate-100 px-1 py-0.5">forecast-daily</code> Edge Function or wait for the 06:00 IST cron.
         </div>
       ) : (
         <div className="space-y-6">
