@@ -124,12 +124,12 @@ export default function AnalyticsPage() {
         <div className="stat"><div className="stat-label">{DAYS}-day revenue</div>
           <div className="stat-value">{inr(stats.revRange)}</div>
           <div className="stat-sub">{stats.nRange} orders</div></div>
-        <div className="stat"><div className="stat-label">Avg ticket</div>
+        <div className="stat"><div className="stat-label">Avg order value</div>
           <div className="stat-value">{inr(stats.avgTicket)}</div>
           <div className="stat-sub">per order</div></div>
         <div className="stat"><div className="stat-label">Cancelled</div>
           <div className="stat-value">{stats.cancelled}</div>
-          <div className="stat-sub">peak hour: {String(stats.peakHour).padStart(2,"0")}:00</div></div>
+          <div className="stat-sub">in the last {DAYS} days</div></div>
       </div>
 
       <div className="grid gap-4 lg:grid-cols-[2fr_1fr]">

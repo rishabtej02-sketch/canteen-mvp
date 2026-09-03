@@ -250,8 +250,8 @@ export default function KitchenPage() {
       <header>
         <h1 className="text-2xl font-bold text-slate-900">Kitchen Control</h1>
         <p className="mt-1 text-sm text-slate-500">
-          Your live inputs to the ETA model. Students see updated wait times
-          within seconds of any change here.
+          Your live settings for the wait times students see. Any change here
+          reaches their screens within seconds.
         </p>
       </header>
 
@@ -261,7 +261,8 @@ export default function KitchenPage() {
           <div>
             <h2 className="font-semibold text-slate-900">Kitchen Mode</h2>
             <p className="text-xs text-slate-500">
-              Multiplies every new ETA. Flip this during a rush or a slow spell.
+              Adjusts every new wait time. Switch this during a rush or a quiet
+              spell — Rush shows longer waits, Slow shows shorter ones.
             </p>
           </div>
           <span className="whitespace-nowrap text-xs text-slate-400">
@@ -299,10 +300,10 @@ export default function KitchenPage() {
       {/* --- Throughput ----------------------------------------------------- */}
       <section className="rounded-2xl border border-slate-200 bg-white p-5">
         <div className="mb-3">
-          <h2 className="font-semibold text-slate-900">Kitchen Throughput</h2>
+          <h2 className="font-semibold text-slate-900">Kitchen Speed</h2>
           <p className="text-xs text-slate-500">
-            Orders your kitchen finishes per minute at Normal pace. Feeds the
-            wait-time estimate.
+            How many orders your kitchen finishes each minute at normal pace.
+            This is what wait times are worked out from.
           </p>
         </div>
         <div className="flex flex-wrap items-end gap-3">
@@ -332,7 +333,7 @@ export default function KitchenPage() {
             Save
           </button>
           <span className="pb-2 text-sm text-slate-500">
-            current: <b>{ks.throughput_per_min}</b>/min
+            now: <b>{ks.throughput_per_min}</b> per min
           </span>
         </div>
       </section>
@@ -343,8 +344,8 @@ export default function KitchenPage() {
           <div className="mb-3">
             <h2 className="font-semibold text-slate-900">Yesterday's Accuracy</h2>
             <p className="text-xs text-slate-500">
-              How close ETA predictions were to actual ready time. Under 20% MAPE
-              is healthy.
+              How close the wait times we showed were to the real ready time.
+              Lower is better — under 20% off is healthy.
             </p>
           </div>
 
@@ -356,10 +357,10 @@ export default function KitchenPage() {
           ) : (
             <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
               <Stat label="Orders" value={String(stats.order_count)} />
-              <Stat label="Avg predicted" value={`${stats.avg_predicted_min} min`} />
-              <Stat label="Avg actual" value={`${stats.avg_actual_min} min`} />
+              <Stat label="Wait we showed" value={`${stats.avg_predicted_min} min`} />
+              <Stat label="Real wait" value={`${stats.avg_actual_min} min`} />
               <Stat
-                label="MAPE"
+                label="Avg off by"
                 value={`${stats.mape_pct}%`}
                 tone={stats.mape_pct > 20 ? 'bad' : 'good'}
               />
@@ -369,13 +370,13 @@ export default function KitchenPage() {
           {stats.suggested_throughput != null && !ignoredSuggestion && (
             <div className="mt-4 rounded-xl border border-amber-200 bg-amber-50 p-4">
               <div className="text-sm font-medium text-amber-900">
-                AI suggests: change throughput from{' '}
+                Suggestion: change kitchen speed from{' '}
                 <b>{ks.throughput_per_min}</b> →{' '}
-                <b>{stats.suggested_throughput}</b>/min
+                <b>{stats.suggested_throughput}</b> per min
               </div>
               <div className="mt-1 text-xs text-amber-800">
-                Yesterday's ETAs were off by {stats.mape_pct}%. This adjustment
-                should tighten the range. You decide.
+                Yesterday's wait times were off by {stats.mape_pct}%. This change
+                should make them more accurate. You decide.
               </div>
               <div className="mt-3 flex flex-wrap gap-2">
                 <button

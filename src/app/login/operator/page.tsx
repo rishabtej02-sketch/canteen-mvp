@@ -62,7 +62,7 @@ export default function OperatorLoginPage() {
               </div>
             )}
             <button className="btn-primary w-full" disabled={busy}>
-              {busy ? "Signing in…" : "Open KDS →"}
+              {busy ? "Signing in…" : "Open kitchen display →"}
             </button>
           </form>
 
@@ -73,10 +73,10 @@ export default function OperatorLoginPage() {
         </div>
 
         <div className="card p-8 animate-fade-up">
-          <div className="text-sm font-semibold text-slate-700">Why a KDS?</div>
+          <div className="text-sm font-semibold text-slate-700">Why the kitchen display?</div>
           <ul className="mt-3 space-y-3 text-sm text-slate-600">
             <li>🟢 <b>Live order feed</b> — new orders appear the second students place them.</li>
-            <li>⏱ <b>Age tinting</b> — cards go amber after 10 min, red after 15 min.</li>
+            <li>⏱ <b>Colour cues</b> — cards turn amber after 10 min, red after 15 min, so nothing waits too long.</li>
             <li>✅ <b>One-tap status</b> — Pending → Preparing → Ready → Picked up.</li>
             <li>📈 <b>Analytics</b> — daily revenue, order counts, top items on <code>/operator/analytics</code>.</li>
           </ul>

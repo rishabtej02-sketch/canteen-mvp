@@ -160,8 +160,8 @@ export default function OperatorPrepPage() {
       {/* Model status strip */}
       <div className="mb-6 grid grid-cols-2 gap-3 md:grid-cols-4">
         <div className="rounded-2xl bg-white p-3 shadow-sm ring-1 ring-slate-100">
-          <div className="text-xs text-slate-500">Model</div>
-          <div className="mt-1 text-sm font-semibold text-slate-900">exp_smooth_v1</div>
+          <div className="text-xs text-slate-500">Forecast</div>
+          <div className="mt-1 text-sm font-semibold text-slate-900">Daily demand</div>
         </div>
         <div className="rounded-2xl bg-white p-3 shadow-sm ring-1 ring-slate-100">
           <div className="text-xs text-slate-500">Last run</div>
@@ -178,7 +178,7 @@ export default function OperatorPrepPage() {
             {accuracy ? `${(100 - accuracy.mape).toFixed(1)}%` : "—"}
           </div>
           <div className="text-xs text-slate-500">
-            {accuracy ? `MAPE ${accuracy.mape.toFixed(1)}% · n=${accuracy.n}` : "no actuals yet"}
+            {accuracy ? `off by ${accuracy.mape.toFixed(1)}% on avg · ${accuracy.n} checks` : "no results yet"}
           </div>
         </div>
         <div className="rounded-2xl bg-white p-3 shadow-sm ring-1 ring-slate-100">
@@ -193,7 +193,7 @@ export default function OperatorPrepPage() {
         <div className="rounded-2xl bg-white p-8 text-center text-slate-400">Loading…</div>
       ) : rows.length === 0 ? (
         <div className="rounded-2xl bg-white p-8 text-center text-slate-500">
-          No forecasts for tomorrow yet. Run the <code className="rounded bg-slate-100 px-1 py-0.5">forecast-daily</code> Edge Function or wait for the 06:00 IST cron.
+          No suggestions for tomorrow yet — they're prepared automatically every morning at 6:00 AM.
         </div>
       ) : (
         <div className="space-y-6">
@@ -269,12 +269,12 @@ export default function OperatorPrepPage() {
       {/* Model card link */}
       <div className="mt-8 rounded-2xl bg-slate-50 p-4 text-xs text-slate-600">
         <details>
-          <summary className="cursor-pointer font-semibold text-slate-700">About this model (exp_smooth_v1)</summary>
+          <summary className="cursor-pointer font-semibold text-slate-700">How these numbers are worked out</summary>
           <div className="mt-2 space-y-2 leading-relaxed">
-            <p><b>Approach:</b> Exponential smoothing (α=0.3) on last 60 days of orders per item, adjusted by day-of-week multiplier. Cold-start items fall back to category average.</p>
-            <p><b>Augmentation, not automation:</b> AI predicts, manager decides. Every accepted number is logged with who approved it and when.</p>
-            <p><b>Fairness:</b> Uses only aggregate order counts. No student features → no risk of demographic bias in what gets cooked.</p>
-            <p><b>Known limits:</b> No promo/event awareness, no weather signal, cold start on new menu items uses category average.</p>
+            <p><b>How it works:</b> looks at the last 60 days of orders for each item, leans on recent days more, and adjusts for the day of the week. Brand-new items start from their category's average.</p>
+            <p><b>You're in charge:</b> the AI only suggests — you decide. Every number you accept is saved with who approved it and when.</p>
+            <p><b>Fair by design:</b> it uses only total order counts — no student details — so nothing personal affects what gets cooked.</p>
+            <p><b>What it can't see yet:</b> promos or events, the weather, and brand-new items (those start from the category average).</p>
           </div>
         </details>
       </div>

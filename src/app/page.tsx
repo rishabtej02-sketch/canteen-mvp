@@ -10,25 +10,25 @@ const FEATURES = [
   {
     icon: "🍳",
     title: "Live kitchen display",
-    text: "Operators see every order the second it's placed, powered by Supabase Realtime.",
+    text: "The kitchen sees every order the second it's placed — no tickets to shout or lose.",
   },
   {
     icon: "🎯",
     title: "Personalized picks",
-    text: "Time-aware hybrid recommender learns what you eat and when you eat it.",
+    text: "Smart suggestions learn what you like to eat and when you like to eat it.",
   },
   {
     icon: "📈",
     title: "Demand forecasting",
-    text: "Hourly forecasts + queueing model keep the canteen stocked and staffed right.",
+    text: "The system predicts each day's demand so the canteen stays stocked and staffed right.",
   },
 ];
 
 const STATS = [
   { k: "40+",    v: "Menu items" },
   { k: "2,000",  v: "Student profiles" },
-  { k: "<200ms", v: "Realtime updates" },
-  { k: "4",      v: "ML models" },
+  { k: "<200ms", v: "Live updates" },
+  { k: "4",      v: "AI models" },
 ];
 
 export default function Home() {
@@ -70,7 +70,7 @@ export default function Home() {
                 I&apos;m a student → order food
               </Link>
               <Link href="/login/operator" className="btn-ghost">
-                I run the canteen → open KDS
+                I run the canteen → open kitchen display
               </Link>
             </div>
 

@@ -69,8 +69,8 @@ export default function OperatorStockPage() {
     <div className="mx-auto max-w-6xl px-4 py-6">
       <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900">Stock</h1>
-          <p className="text-sm text-slate-500">Live inventory — refills push to students instantly.</p>
+          <h1 className="text-2xl font-bold text-slate-900">Menu stock</h1>
+          <p className="text-sm text-slate-500">How many of each menu item is left — refills reach students instantly.</p>
         </div>
         <div className="flex gap-2">
           <div className="rounded-xl bg-slate-100 px-3 py-2 text-sm">
@@ -106,7 +106,7 @@ export default function OperatorStockPage() {
                   <thead className="bg-slate-50 text-xs uppercase text-slate-500">
                     <tr>
                       <th className="px-4 py-2 text-left">Item</th>
-                      <th className="px-4 py-2 text-right">Stock / Cap</th>
+                      <th className="px-4 py-2 text-right">Left / Max</th>
                       <th className="px-4 py-2 text-center">Quick</th>
                       <th className="px-4 py-2 text-right">Restock to</th>
                     </tr>

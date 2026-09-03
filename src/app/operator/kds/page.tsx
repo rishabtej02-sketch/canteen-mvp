@@ -148,11 +148,11 @@ export default function KdsPage() {
               }`}
             />
             {rtStatus === "live"
-              ? "Live via Supabase Realtime"
+              ? "Live — new orders appear instantly"
               : rtStatus === "polling"
-              ? "Polling every 5s (Realtime unavailable)"
+              ? "Auto-refreshing every 5s"
               : "Connecting…"}
-            {" · advances one tap at a time."}
+            {" · move orders forward one tap at a time."}
           </p>
         </div>
         <div className="flex flex-wrap gap-2">

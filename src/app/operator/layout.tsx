@@ -7,12 +7,12 @@ import { Logo } from "@/components/Logo";
 import { clearOperator, getOperator, type OperatorSession } from "@/lib/auth";
 
 const NAV = [
-  { href: "/operator/prep",      label: "Morning Prep",    icon: "🌅" },
-  { href: "/operator/kds",       label: "Kitchen Display", icon: "🍳" },
-  { href: "/operator/stock",     label: "Stock",           icon: "📦" },
-  { href: "/operator/analytics", label: "Analytics",       icon: "📈" },
-  { href: '/operator/kitchen', label: 'Kitchen', icon: '⚙️' },
-  { href: '/operator/inventory', label: 'Inventory', icon: '📦' },
+  { href: "/operator/prep",      label: "Morning Prep",     icon: "🌅" },
+  { href: "/operator/kds",       label: "Kitchen Display",  icon: "🍳" },
+  { href: '/operator/kitchen',   label: 'Kitchen Settings', icon: '⚙️' },
+  { href: "/operator/stock",     label: "Menu Stock",       icon: "📦" },
+  { href: '/operator/inventory', label: 'Ingredients',      icon: '🥕' },
+  { href: "/operator/analytics", label: "Analytics",        icon: "📈" },
 ];
 
 export default function OperatorLayout({ children }: { children: React.ReactNode }) {

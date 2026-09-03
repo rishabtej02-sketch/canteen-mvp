@@ -141,10 +141,11 @@ export default function InventoryPage() {
     <div>
       <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold">Inventory</h1>
+          <h1 className="text-2xl font-bold">Ingredients</h1>
           <p className="text-sm text-slate-500">
-            Live ingredient stock and projected run-out. Burn rates come from
-            today&apos;s forecast + live orders, refreshed every 15 min.
+            Live ingredient stock and when each is likely to run out. Usage
+            rates come from today&apos;s forecast plus live orders, updated every
+            15 min.
           </p>
         </div>
         <div className="flex gap-2">
@@ -170,7 +171,7 @@ export default function InventoryPage() {
               <tr className="border-b border-slate-200 text-left text-xs uppercase tracking-wide text-slate-500">
                 <th className="px-4 py-3">Ingredient</th>
                 <th className="px-4 py-3">Stock</th>
-                <th className="px-4 py-3">Burn / min</th>
+                <th className="px-4 py-3">Used / min</th>
                 <th className="px-4 py-3">Runs out</th>
                 <th className="px-4 py-3">Status</th>
                 <th className="px-4 py-3">Restock</th>
@@ -231,7 +232,7 @@ function StatusPill({ status, affected }: { status: Status; affected: number }) 
   const map: Record<Status, { label: string; cls: string }> = {
     critical: { label: `🔴 Critical`, cls: 'bg-red-100 text-red-700' },
     warning: { label: `🟠 Low soon`, cls: 'bg-amber-100 text-amber-700' },
-    low: { label: `🟡 Below reorder`, cls: 'bg-yellow-100 text-yellow-700' },
+    low: { label: `🟡 Running low`, cls: 'bg-yellow-100 text-yellow-700' },
     healthy: { label: `🟢 Healthy`, cls: 'bg-emerald-100 text-emerald-700' },
   }
   const s = map[status]
