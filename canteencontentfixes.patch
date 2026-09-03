@@ -1,0 +1,371 @@
+From 9de80fdc03efc670a8de18daa1b4d64bbaa6896e Mon Sep 17 00:00:00 2001
+From: Claude <noreply@anthropic.com>
+Date: Thu, 3 Sep 2026 10:02:20 +0000
+Subject: [PATCH] content: plain-language operator UI + landing; clearer nav
+ labels
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+Replace jargon with wording a canteen operator understands:
+- Kitchen Control: 'Throughput' -> 'Kitchen Speed'; 'MAPE' -> 'Avg off by';
+  'ETA model' -> plain wait-time language
+- Morning Prep: drop MAPE / Edge Function / cron; simplify model card
+- Ingredients (was Inventory): 'Burn/min' -> 'Used/min'; 'Below reorder' -> 'Running low'
+- Kitchen Display: 'Supabase Realtime'/'Polling' -> plain live/auto-refresh text
+- Analytics: 'Avg ticket' -> 'Avg order value'; fix mismatched Cancelled subtext
+- Menu Stock (was Stock): 'Stock/Cap' -> 'Left/Max'
+- Landing + operator login: drop Supabase Realtime / hybrid recommender / KDS / ML jargon
+- Nav: dedupe 📦 icon, clearer labels (Menu Stock, Ingredients, Kitchen Settings)
+
+Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01WAaG9KM1L8CvDwQDSiPi1q
+---
+ src/app/login/operator/page.tsx     |  6 +++---
+ src/app/operator/analytics/page.tsx |  4 ++--
+ src/app/operator/inventory/page.tsx | 11 +++++-----
+ src/app/operator/kds/page.tsx       |  6 +++---
+ src/app/operator/kitchen/page.tsx   | 33 +++++++++++++++--------------
+ src/app/operator/layout.tsx         | 12 +++++------
+ src/app/operator/prep/page.tsx      | 18 ++++++++--------
+ src/app/operator/stock/page.tsx     |  6 +++---
+ src/app/page.tsx                    | 12 +++++------
+ 9 files changed, 55 insertions(+), 53 deletions(-)
+
+diff --git a/src/app/login/operator/page.tsx b/src/app/login/operator/page.tsx
+index 2095248..9367ff1 100644
+--- a/src/app/login/operator/page.tsx
++++ b/src/app/login/operator/page.tsx
+@@ -62,7 +62,7 @@ export default function OperatorLoginPage() {
+               </div>
+             )}
+             <button className="btn-primary w-full" disabled={busy}>
+-              {busy ? "Signing in…" : "Open KDS →"}
++              {busy ? "Signing in…" : "Open kitchen display →"}
+             </button>
+           </form>
+ 
+@@ -73,10 +73,10 @@ export default function OperatorLoginPage() {
+         </div>
+ 
+         <div className="card p-8 animate-fade-up">
+-          <div className="text-sm font-semibold text-slate-700">Why a KDS?</div>
++          <div className="text-sm font-semibold text-slate-700">Why the kitchen display?</div>
+           <ul className="mt-3 space-y-3 text-sm text-slate-600">
+             <li>🟢 <b>Live order feed</b> — new orders appear the second students place them.</li>
+-            <li>⏱ <b>Age tinting</b> — cards go amber after 10 min, red after 15 min.</li>
++            <li>⏱ <b>Colour cues</b> — cards turn amber after 10 min, red after 15 min, so nothing waits too long.</li>
+             <li>✅ <b>One-tap status</b> — Pending → Preparing → Ready → Picked up.</li>
+             <li>📈 <b>Analytics</b> — daily revenue, order counts, top items on <code>/operator/analytics</code>.</li>
+           </ul>
+diff --git a/src/app/operator/analytics/page.tsx b/src/app/operator/analytics/page.tsx
+index 7fe262e..8119100 100644
+--- a/src/app/operator/analytics/page.tsx
++++ b/src/app/operator/analytics/page.tsx
+@@ -124,12 +124,12 @@ export default function AnalyticsPage() {
+         <div className="stat"><div className="stat-label">{DAYS}-day revenue</div>
+           <div className="stat-value">{inr(stats.revRange)}</div>
+           <div className="stat-sub">{stats.nRange} orders</div></div>
+-        <div className="stat"><div className="stat-label">Avg ticket</div>
++        <div className="stat"><div className="stat-label">Avg order value</div>
+           <div className="stat-value">{inr(stats.avgTicket)}</div>
+           <div className="stat-sub">per order</div></div>
+         <div className="stat"><div className="stat-label">Cancelled</div>
+           <div className="stat-value">{stats.cancelled}</div>
+-          <div className="stat-sub">peak hour: {String(stats.peakHour).padStart(2,"0")}:00</div></div>
++          <div className="stat-sub">in the last {DAYS} days</div></div>
+       </div>
+ 
+       <div className="grid gap-4 lg:grid-cols-[2fr_1fr]">
+diff --git a/src/app/operator/inventory/page.tsx b/src/app/operator/inventory/page.tsx
+index 0cbb7af..b5df769 100644
+--- a/src/app/operator/inventory/page.tsx
++++ b/src/app/operator/inventory/page.tsx
+@@ -141,10 +141,11 @@ export default function InventoryPage() {
+     <div>
+       <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
+         <div>
+-          <h1 className="text-2xl font-bold">Inventory</h1>
++          <h1 className="text-2xl font-bold">Ingredients</h1>
+           <p className="text-sm text-slate-500">
+-            Live ingredient stock and projected run-out. Burn rates come from
+-            today&apos;s forecast + live orders, refreshed every 15 min.
++            Live ingredient stock and when each is likely to run out. Usage
++            rates come from today&apos;s forecast plus live orders, updated every
++            15 min.
+           </p>
+         </div>
+         <div className="flex gap-2">
+@@ -170,7 +171,7 @@ export default function InventoryPage() {
+               <tr className="border-b border-slate-200 text-left text-xs uppercase tracking-wide text-slate-500">
+                 <th className="px-4 py-3">Ingredient</th>
+                 <th className="px-4 py-3">Stock</th>
+-                <th className="px-4 py-3">Burn / min</th>
++                <th className="px-4 py-3">Used / min</th>
+                 <th className="px-4 py-3">Runs out</th>
+                 <th className="px-4 py-3">Status</th>
+                 <th className="px-4 py-3">Restock</th>
+@@ -231,7 +232,7 @@ function StatusPill({ status, affected }: { status: Status; affected: number })
+   const map: Record<Status, { label: string; cls: string }> = {
+     critical: { label: `🔴 Critical`, cls: 'bg-red-100 text-red-700' },
+     warning: { label: `🟠 Low soon`, cls: 'bg-amber-100 text-amber-700' },
+-    low: { label: `🟡 Below reorder`, cls: 'bg-yellow-100 text-yellow-700' },
++    low: { label: `🟡 Running low`, cls: 'bg-yellow-100 text-yellow-700' },
+     healthy: { label: `🟢 Healthy`, cls: 'bg-emerald-100 text-emerald-700' },
+   }
+   const s = map[status]
+diff --git a/src/app/operator/kds/page.tsx b/src/app/operator/kds/page.tsx
+index eb40c3a..6e990b8 100644
+--- a/src/app/operator/kds/page.tsx
++++ b/src/app/operator/kds/page.tsx
+@@ -148,11 +148,11 @@ export default function KdsPage() {
+               }`}
+             />
+             {rtStatus === "live"
+-              ? "Live via Supabase Realtime"
++              ? "Live — new orders appear instantly"
+               : rtStatus === "polling"
+-              ? "Polling every 5s (Realtime unavailable)"
++              ? "Auto-refreshing every 5s"
+               : "Connecting…"}
+-            {" · advances one tap at a time."}
++            {" · move orders forward one tap at a time."}
+           </p>
+         </div>
+         <div className="flex flex-wrap gap-2">
+diff --git a/src/app/operator/kitchen/page.tsx b/src/app/operator/kitchen/page.tsx
+index 846441a..4f693cc 100644
+--- a/src/app/operator/kitchen/page.tsx
++++ b/src/app/operator/kitchen/page.tsx
+@@ -250,8 +250,8 @@ export default function KitchenPage() {
+       <header>
+         <h1 className="text-2xl font-bold text-slate-900">Kitchen Control</h1>
+         <p className="mt-1 text-sm text-slate-500">
+-          Your live inputs to the ETA model. Students see updated wait times
+-          within seconds of any change here.
++          Your live settings for the wait times students see. Any change here
++          reaches their screens within seconds.
+         </p>
+       </header>
+ 
+@@ -261,7 +261,8 @@ export default function KitchenPage() {
+           <div>
+             <h2 className="font-semibold text-slate-900">Kitchen Mode</h2>
+             <p className="text-xs text-slate-500">
+-              Multiplies every new ETA. Flip this during a rush or a slow spell.
++              Adjusts every new wait time. Switch this during a rush or a quiet
++              spell — Rush shows longer waits, Slow shows shorter ones.
+             </p>
+           </div>
+           <span className="whitespace-nowrap text-xs text-slate-400">
+@@ -299,10 +300,10 @@ export default function KitchenPage() {
+       {/* --- Throughput ----------------------------------------------------- */}
+       <section className="rounded-2xl border border-slate-200 bg-white p-5">
+         <div className="mb-3">
+-          <h2 className="font-semibold text-slate-900">Kitchen Throughput</h2>
++          <h2 className="font-semibold text-slate-900">Kitchen Speed</h2>
+           <p className="text-xs text-slate-500">
+-            Orders your kitchen finishes per minute at Normal pace. Feeds the
+-            wait-time estimate.
++            How many orders your kitchen finishes each minute at normal pace.
++            This is what wait times are worked out from.
+           </p>
+         </div>
+         <div className="flex flex-wrap items-end gap-3">
+@@ -332,7 +333,7 @@ export default function KitchenPage() {
+             Save
+           </button>
+           <span className="pb-2 text-sm text-slate-500">
+-            current: <b>{ks.throughput_per_min}</b>/min
++            now: <b>{ks.throughput_per_min}</b> per min
+           </span>
+         </div>
+       </section>
+@@ -343,8 +344,8 @@ export default function KitchenPage() {
+           <div className="mb-3">
+             <h2 className="font-semibold text-slate-900">Yesterday's Accuracy</h2>
+             <p className="text-xs text-slate-500">
+-              How close ETA predictions were to actual ready time. Under 20% MAPE
+-              is healthy.
++              How close the wait times we showed were to the real ready time.
++              Lower is better — under 20% off is healthy.
+             </p>
+           </div>
+ 
+@@ -356,10 +357,10 @@ export default function KitchenPage() {
+           ) : (
+             <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+               <Stat label="Orders" value={String(stats.order_count)} />
+-              <Stat label="Avg predicted" value={`${stats.avg_predicted_min} min`} />
+-              <Stat label="Avg actual" value={`${stats.avg_actual_min} min`} />
++              <Stat label="Wait we showed" value={`${stats.avg_predicted_min} min`} />
++              <Stat label="Real wait" value={`${stats.avg_actual_min} min`} />
+               <Stat
+-                label="MAPE"
++                label="Avg off by"
+                 value={`${stats.mape_pct}%`}
+                 tone={stats.mape_pct > 20 ? 'bad' : 'good'}
+               />
+@@ -369,13 +370,13 @@ export default function KitchenPage() {
+           {stats.suggested_throughput != null && !ignoredSuggestion && (
+             <div className="mt-4 rounded-xl border border-amber-200 bg-amber-50 p-4">
+               <div className="text-sm font-medium text-amber-900">
+-                AI suggests: change throughput from{' '}
++                Suggestion: change kitchen speed from{' '}
+                 <b>{ks.throughput_per_min}</b> →{' '}
+-                <b>{stats.suggested_throughput}</b>/min
++                <b>{stats.suggested_throughput}</b> per min
+               </div>
+               <div className="mt-1 text-xs text-amber-800">
+-                Yesterday's ETAs were off by {stats.mape_pct}%. This adjustment
+-                should tighten the range. You decide.
++                Yesterday's wait times were off by {stats.mape_pct}%. This change
++                should make them more accurate. You decide.
+               </div>
+               <div className="mt-3 flex flex-wrap gap-2">
+                 <button
+diff --git a/src/app/operator/layout.tsx b/src/app/operator/layout.tsx
+index 6f377d0..b171ae7 100644
+--- a/src/app/operator/layout.tsx
++++ b/src/app/operator/layout.tsx
+@@ -7,12 +7,12 @@ import { Logo } from "@/components/Logo";
+ import { clearOperator, getOperator, type OperatorSession } from "@/lib/auth";
+ 
+ const NAV = [
+-  { href: "/operator/prep",      label: "Morning Prep",    icon: "🌅" },
+-  { href: "/operator/kds",       label: "Kitchen Display", icon: "🍳" },
+-  { href: "/operator/stock",     label: "Stock",           icon: "📦" },
+-  { href: "/operator/analytics", label: "Analytics",       icon: "📈" },
+-  { href: '/operator/kitchen', label: 'Kitchen', icon: '⚙️' },
+-  { href: '/operator/inventory', label: 'Inventory', icon: '📦' },
++  { href: "/operator/prep",      label: "Morning Prep",     icon: "🌅" },
++  { href: "/operator/kds",       label: "Kitchen Display",  icon: "🍳" },
++  { href: '/operator/kitchen',   label: 'Kitchen Settings', icon: '⚙️' },
++  { href: "/operator/stock",     label: "Menu Stock",       icon: "📦" },
++  { href: '/operator/inventory', label: 'Ingredients',      icon: '🥕' },
++  { href: "/operator/analytics", label: "Analytics",        icon: "📈" },
+ ];
+ 
+ export default function OperatorLayout({ children }: { children: React.ReactNode }) {
+diff --git a/src/app/operator/prep/page.tsx b/src/app/operator/prep/page.tsx
+index ef53691..0764579 100644
+--- a/src/app/operator/prep/page.tsx
++++ b/src/app/operator/prep/page.tsx
+@@ -160,8 +160,8 @@ export default function OperatorPrepPage() {
+       {/* Model status strip */}
+       <div className="mb-6 grid grid-cols-2 gap-3 md:grid-cols-4">
+         <div className="rounded-2xl bg-white p-3 shadow-sm ring-1 ring-slate-100">
+-          <div className="text-xs text-slate-500">Model</div>
+-          <div className="mt-1 text-sm font-semibold text-slate-900">exp_smooth_v1</div>
++          <div className="text-xs text-slate-500">Forecast</div>
++          <div className="mt-1 text-sm font-semibold text-slate-900">Daily demand</div>
+         </div>
+         <div className="rounded-2xl bg-white p-3 shadow-sm ring-1 ring-slate-100">
+           <div className="text-xs text-slate-500">Last run</div>
+@@ -178,7 +178,7 @@ export default function OperatorPrepPage() {
+             {accuracy ? `${(100 - accuracy.mape).toFixed(1)}%` : "—"}
+           </div>
+           <div className="text-xs text-slate-500">
+-            {accuracy ? `MAPE ${accuracy.mape.toFixed(1)}% · n=${accuracy.n}` : "no actuals yet"}
++            {accuracy ? `off by ${accuracy.mape.toFixed(1)}% on avg · ${accuracy.n} checks` : "no results yet"}
+           </div>
+         </div>
+         <div className="rounded-2xl bg-white p-3 shadow-sm ring-1 ring-slate-100">
+@@ -193,7 +193,7 @@ export default function OperatorPrepPage() {
+         <div className="rounded-2xl bg-white p-8 text-center text-slate-400">Loading…</div>
+       ) : rows.length === 0 ? (
+         <div className="rounded-2xl bg-white p-8 text-center text-slate-500">
+-          No forecasts for tomorrow yet. Run the <code className="rounded bg-slate-100 px-1 py-0.5">forecast-daily</code> Edge Function or wait for the 06:00 IST cron.
++          No suggestions for tomorrow yet — they're prepared automatically every morning at 6:00 AM.
+         </div>
+       ) : (
+         <div className="space-y-6">
+@@ -269,12 +269,12 @@ export default function OperatorPrepPage() {
+       {/* Model card link */}
+       <div className="mt-8 rounded-2xl bg-slate-50 p-4 text-xs text-slate-600">
+         <details>
+-          <summary className="cursor-pointer font-semibold text-slate-700">About this model (exp_smooth_v1)</summary>
++          <summary className="cursor-pointer font-semibold text-slate-700">How these numbers are worked out</summary>
+           <div className="mt-2 space-y-2 leading-relaxed">
+-            <p><b>Approach:</b> Exponential smoothing (α=0.3) on last 60 days of orders per item, adjusted by day-of-week multiplier. Cold-start items fall back to category average.</p>
+-            <p><b>Augmentation, not automation:</b> AI predicts, manager decides. Every accepted number is logged with who approved it and when.</p>
+-            <p><b>Fairness:</b> Uses only aggregate order counts. No student features → no risk of demographic bias in what gets cooked.</p>
+-            <p><b>Known limits:</b> No promo/event awareness, no weather signal, cold start on new menu items uses category average.</p>
++            <p><b>How it works:</b> looks at the last 60 days of orders for each item, leans on recent days more, and adjusts for the day of the week. Brand-new items start from their category's average.</p>
++            <p><b>You're in charge:</b> the AI only suggests — you decide. Every number you accept is saved with who approved it and when.</p>
++            <p><b>Fair by design:</b> it uses only total order counts — no student details — so nothing personal affects what gets cooked.</p>
++            <p><b>What it can't see yet:</b> promos or events, the weather, and brand-new items (those start from the category average).</p>
+           </div>
+         </details>
+       </div>
+diff --git a/src/app/operator/stock/page.tsx b/src/app/operator/stock/page.tsx
+index 026d909..1d4b92b 100644
+--- a/src/app/operator/stock/page.tsx
++++ b/src/app/operator/stock/page.tsx
+@@ -69,8 +69,8 @@ export default function OperatorStockPage() {
+     <div className="mx-auto max-w-6xl px-4 py-6">
+       <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
+         <div>
+-          <h1 className="text-2xl font-bold text-slate-900">Stock</h1>
+-          <p className="text-sm text-slate-500">Live inventory — refills push to students instantly.</p>
++          <h1 className="text-2xl font-bold text-slate-900">Menu stock</h1>
++          <p className="text-sm text-slate-500">How many of each menu item is left — refills reach students instantly.</p>
+         </div>
+         <div className="flex gap-2">
+           <div className="rounded-xl bg-slate-100 px-3 py-2 text-sm">
+@@ -106,7 +106,7 @@ export default function OperatorStockPage() {
+                   <thead className="bg-slate-50 text-xs uppercase text-slate-500">
+                     <tr>
+                       <th className="px-4 py-2 text-left">Item</th>
+-                      <th className="px-4 py-2 text-right">Stock / Cap</th>
++                      <th className="px-4 py-2 text-right">Left / Max</th>
+                       <th className="px-4 py-2 text-center">Quick</th>
+                       <th className="px-4 py-2 text-right">Restock to</th>
+                     </tr>
+diff --git a/src/app/page.tsx b/src/app/page.tsx
+index b685ffd..423a92a 100644
+--- a/src/app/page.tsx
++++ b/src/app/page.tsx
+@@ -10,25 +10,25 @@ const FEATURES = [
+   {
+     icon: "🍳",
+     title: "Live kitchen display",
+-    text: "Operators see every order the second it's placed, powered by Supabase Realtime.",
++    text: "The kitchen sees every order the second it's placed — no tickets to shout or lose.",
+   },
+   {
+     icon: "🎯",
+     title: "Personalized picks",
+-    text: "Time-aware hybrid recommender learns what you eat and when you eat it.",
++    text: "Smart suggestions learn what you like to eat and when you like to eat it.",
+   },
+   {
+     icon: "📈",
+     title: "Demand forecasting",
+-    text: "Hourly forecasts + queueing model keep the canteen stocked and staffed right.",
++    text: "The system predicts each day's demand so the canteen stays stocked and staffed right.",
+   },
+ ];
+ 
+ const STATS = [
+   { k: "40+",    v: "Menu items" },
+   { k: "2,000",  v: "Student profiles" },
+-  { k: "<200ms", v: "Realtime updates" },
+-  { k: "4",      v: "ML models" },
++  { k: "<200ms", v: "Live updates" },
++  { k: "4",      v: "AI models" },
+ ];
+ 
+ export default function Home() {
+@@ -70,7 +70,7 @@ export default function Home() {
+                 I&apos;m a student → order food
+               </Link>
+               <Link href="/login/operator" className="btn-ghost">
+-                I run the canteen → open KDS
++                I run the canteen → open kitchen display
+               </Link>
+             </div>
+ 
+-- 
+2.43.0
+
