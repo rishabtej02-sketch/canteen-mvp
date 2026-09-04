@@ -11,7 +11,7 @@
 Deliberately simple, explainable formula rather than a black-box regressor. Two reasons:
 
 1. The operator needs to *understand* what shifted the ETA in order to trust it and to reason about kitchen operations.
-2. The rubric (CLO3) grades **transparency and augmentation**, not model sophistication. A clean formula with human dials scores better than an opaque ML model with no override.
+2. The rubric (CLO3) grades **transparency and augmentation**, not model sophistication. A clean formula with human dials scores better than an opaque model with no override.
 
 **Formula.**
 
@@ -90,7 +90,7 @@ The student sees:
 - band (not a single false-precise number)
 - why (queue + mode)
 
-No opaque "ML says 14 minutes."
+No opaque "system says 14 minutes."
 
 ---
 

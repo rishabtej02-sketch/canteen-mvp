@@ -8,7 +8,7 @@ dead orders (a student ordering a dish the kitchen can no longer make).
 Covers **Loop A (Skip-the-Queue / kitchen-side)** extension from the MessMind
 blueprint: proactive stockout avoidance.
 
-## Approach — explainable formula, not ML
+## Approach — explainable formula
 Chosen deliberately (consistent with `eta_v1`): transparency over sophistication
 for CLO3. Every number an operator sees can be traced by hand.
 
@@ -49,7 +49,7 @@ a human commits the customer-facing action.
 ## Transparency (CLO3)
 Alerts are stated in plain language with the reason built in:
 `🔴 Onion gone ~1:40 PM · ~35 min left · 8 items affected: Vada Pav, Pav Bhaji, …`
-No opaque "AI hid these items." Affected list is always shown before any action.
+No opaque logic hiding items. Affected list is always shown before any action.
 
 ## Fairness
 Depletion uses only **operational** inputs — stock levels, recipes, forecast

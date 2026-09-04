@@ -2,7 +2,7 @@
 
 Adds live stock management (sold-out badge, restock UI, automatic decrement)
 and a daily demand forecast (Edge Function + operator "Morning Prep" screen
-where you approve every AI number before the kitchen cooks it).
+where you approve every predicted number before the kitchen cooks it).
 
 **Loops from MessMind blueprint hit by this patch:** A (skip the queue) foundation, B (morning forecast) end-to-end.
 
@@ -240,7 +240,7 @@ Vercel auto-deploys on push.
 
 ### Operator side
 - [ ] `/operator/stock` — table shows all items grouped by category. +/− buttons update instantly. "Set" restocks to typed number.
-- [ ] `/operator/prep` — after Step 5 runs, shows one card per item with "AI suggests: N plates" and Accept/Edit buttons. Accepting sets `stock_today` and `stock_cap` on the item.
+- [ ] `/operator/prep` — after Step 5 runs, shows one card per item with "Suggested: N plates" and Accept/Edit buttons. Accepting sets `stock_today` and `stock_cap` on the item.
 - [ ] Header shows last model run timestamp + 14-day MAPE (will say "no actuals yet" for first day; populates after Step 6 runs the end-of-day cron).
 
 ### Rubric evidence for report
@@ -285,6 +285,6 @@ ALTER TABLE public.menu_items
 
 ## Next patches (still coming)
 
-- **Patch 4:** Live ETA prediction on student checkout (Loop A, AI #2)
-- **Patch 5:** Ingredient BOM + depletion alerts on KDS (Loop A/B, AI #3)
-- **Patch 6:** Last Plate discount trigger + student recommender (Loop C + cross, AI #4 + #5)
+- **Patch 4:** Live ETA prediction on student checkout (Loop A, Model #2)
+- **Patch 5:** Ingredient BOM + depletion alerts on KDS (Loop A/B, Model #3)
+- **Patch 6:** Last Plate discount trigger + student recommender (Loop C + cross, Model #4 + #5)

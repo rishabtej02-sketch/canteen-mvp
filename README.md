@@ -1,6 +1,6 @@
-# Canteen AI — MVP
+# Canteen — MVP
 
-AI-driven college canteen management. Next.js 14 (App Router) + Supabase (Postgres + Realtime) + Python for the ML side.
+College canteen management. Next.js 14 (App Router) + Supabase (Postgres + Realtime) + Python for forecasting.
 
 ## Live routes
 
@@ -106,7 +106,7 @@ OperatorSession = { label, loggedInAt }      // password-gated
 
 Swap this for real Supabase Auth (magic link or email + password) by replacing `lib/auth.ts` — the rest of the app calls `getStudent()` / `getOperator()` and doesn't care where the session came from.
 
-## Roadmap (ML)
+## Roadmap
 
 1. **Demand forecast** → `hourly_forecasts` (Prophet or LightGBM per item, hourly).
 2. **Queue / staffing** → M/M/c model on live `orders` arrival rate.

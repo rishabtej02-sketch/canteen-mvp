@@ -11,11 +11,7 @@ export function Logo({ compact = false }: { compact?: boolean }) {
       </span>
       {!compact && (
         <span className="text-lg text-slate-900">
-          Canteen
-          <span className="ml-1 rounded-md bg-brand-100 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-brand-700">
-            AI
-          </span>
-        </span>
+          Canteen</span>
       )}
     </Link>
   );

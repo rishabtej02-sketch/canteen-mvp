@@ -145,7 +145,7 @@ export default function OperatorPrepPage() {
         <div>
           <h1 className="text-2xl font-bold text-slate-900">Morning prep</h1>
           <p className="text-sm text-slate-500">
-            AI proposes today's cook quantities. You approve every number.
+            Suggested cook quantities from the last 60 days. You approve every number.
           </p>
         </div>
         <button
@@ -215,7 +215,7 @@ export default function OperatorPrepPage() {
                         <div>
                           <div className="font-medium text-slate-900">{r.name}</div>
                           <div className="text-xs text-slate-500">
-                            AI suggests <span className="font-semibold text-indigo-700">{r.predicted_qty}</span> plates
+                            Suggested: <span className="font-semibold text-indigo-700">{r.predicted_qty}</span> plates
                             {isAccepted && (
                               <> · accepted <span className="font-semibold text-emerald-700">{r.accepted_qty}</span> by {r.accepted_by}</>
                             )}
@@ -272,7 +272,7 @@ export default function OperatorPrepPage() {
           <summary className="cursor-pointer font-semibold text-slate-700">How these numbers are worked out</summary>
           <div className="mt-2 space-y-2 leading-relaxed">
             <p><b>How it works:</b> looks at the last 60 days of orders for each item, leans on recent days more, and adjusts for the day of the week. Brand-new items start from their category's average.</p>
-            <p><b>You're in charge:</b> the AI only suggests — you decide. Every number you accept is saved with who approved it and when.</p>
+            <p><b>You're in charge:</b> the system only suggests — you decide. Every number you accept is saved with who approved it and when.</p>
             <p><b>Fair by design:</b> it uses only total order counts — no student details — so nothing personal affects what gets cooked.</p>
             <p><b>What it can't see yet:</b> promos or events, the weather, and brand-new items (those start from the category average).</p>
           </div>

@@ -28,7 +28,7 @@ const STATS = [
   { k: "40+",    v: "Menu items" },
   { k: "2,000",  v: "Student profiles" },
   { k: "<200ms", v: "Live updates" },
-  { k: "4",      v: "AI models" },
+  { k: "4",      v: "Categories" },
 ];
 
 export default function Home() {
@@ -53,7 +53,7 @@ export default function Home() {
         <div className="mx-auto grid max-w-6xl items-center gap-10 px-4 py-16 md:grid-cols-2">
           <div className="animate-fade-up">
             <div className="badge bg-brand-100 text-brand-700">
-              🚀 AI-driven canteen · MVP
+              🚀 Campus canteen · MVP
             </div>
             <h1 className="mt-3 text-4xl font-black tracking-tight text-slate-900 md:text-5xl">
               The campus canteen,{" "}
@@ -146,7 +146,7 @@ export default function Home() {
 
       <footer className="mx-auto max-w-6xl px-4 pb-10 pt-4 text-xs text-slate-500">
         <div className="flex flex-wrap items-center justify-between gap-2">
-          <div>Canteen AI · Next.js + Supabase + Python ML</div>
+          <div>Canteen · Next.js + Supabase</div>
           <div className="flex gap-3">
             <Link href="/login/student" className="link">Student</Link>
             <Link href="/login/operator" className="link">Operator</Link>
